@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include AssemblyInfo.wxi ?>
+
+  <?if $(var.Platform) = x64 ?>
+  <?define Win64 = "yes" ?>
+  <?define Bitness = "64" ?>
+  <?define PlatformProgramFilesFolder = "ProgramFiles64Folder" ?>
+  <?else ?>
+  <?define Win64 = "no" ?>
+  <?define Bitness = "32" ?>
+  <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
+  <?endif ?>
+
+  <?define BitnessErrorMessage = "$(var.ProductName) requires MS Office $(var.Bitness)-bit version to be installed." ?>
+  <?define OfficeAddinVersion="$(FileVersion.ProductVersion(..\OfficeAddin\bin\$(var.Configuration)\OfficeAddin.dll))" ?>
+
+  <Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="Dzmitry Safin" UpgradeCode="$(var.UpgradeCode.Guid)">
+		<Package InstallerVersion="405" Compressed="yes" InstallScope="perMachine" />
+    <Media Id="1" Cabinet="OfficeAddinSetup.cab" EmbedCab="yes" />
+    <UIRef Id="WixUI_Mondo" />
+
+    <Property Id="ARPURLINFOABOUT" Value="http://www.addin.com/" />
+    <Property Id="ARPPRODUCTICON" Value="Addin.ico" />
+    <Icon Id="Addin.ico" SourceFile="Images\Addin.ico" />
+
+    <Binary Id="CustomActions" SourceFile="$(var.CustomActions.TargetDir)$(var.CustomActions.TargetName).CA.dll"/>
+    <CustomAction Id="PreventDowngrading" Error="A newer version of $(var.TargetName) is already installed." />
+    <CustomAction Id="ExtractPreviousVersion" BinaryKey="CustomActions" DllEntry="ExtractPreviousVersion" Execute="immediate" />
+
+    <Upgrade Id="$(var.UpgradeCode.Guid)">
+      <UpgradeVersion OnlyDetect="yes" Minimum="$(var.ProductVersion)" IncludeMinimum="yes" Property="NEWERFOUND" />
+      <UpgradeVersion OnlyDetect="no" Minimum="1.0.0" IncludeMinimum="yes" Maximum="$(var.ProductVersion)" IncludeMaximum="no" Property="PREVIOUSFOUND" />
+    </Upgrade>
+
+    <InstallUISequence>
+      <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWERFOUND</Custom>
+      <Custom Action="ExtractPreviousVersion" After="FindRelatedProducts">PREVIOUSFOUND</Custom>
+    </InstallUISequence>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallInitialize" />
+      <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWERFOUND</Custom>
+    </InstallExecuteSequence>
+
+    <Feature Id="ProductFeature" Title="OfficeAddinSetup" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+
+      <Feature Id="Product_Word" Level="1" Display="collapse" Absent="allow" ConfigurableDirectory="INSTALLFOLDER" Title="Word" Description="Integration with Word">
+        <ComponentRef Id="Product_Word_Registration" />
+      </Feature>
+      <Feature Id="Product_Excel" Level="1" Display="collapse" Absent="allow" ConfigurableDirectory="INSTALLFOLDER" Title="Excel" Description="Integration with Excel">
+        <ComponentRef Id="Product_Excel_Registration" />
+      </Feature>
+      <Feature Id="Product_PowerPoint" Level="1" Display="collapse" Absent="allow" ConfigurableDirectory="INSTALLFOLDER" Title="PowerPoint" Description="Integration with PowerPoint">
+        <ComponentRef Id="Product_PowerPoint_Registration" />
+      </Feature>
+      <Feature Id="Product_Outlook" Level="1" Display="collapse" Absent="allow" ConfigurableDirectory="INSTALLFOLDER" Title="Outlook" Description="Integration with Outlook">
+        <ComponentRef Id="Product_Outlook_Registration" />
+      </Feature>
+      <Feature Id="Product_Access" Level="1" Display="collapse" Absent="allow" ConfigurableDirectory="INSTALLFOLDER" Title="Access" Description="Integration with Access">
+        <ComponentRef Id="Product_Access_Registration" />
+      </Feature>
+    </Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="$(var.PlatformProgramFilesFolder)">
+				<Directory Id="INSTALLFOLDER" Name="OfficeAddin" />
+			</Directory>
+		</Directory>
+	</Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+        <Component Id="ProductComponent" Guid="{9E823407-FBA8-4669-B644-96BB2AFDFEA7}">
+          <File Id="OfficeAddinDll" Name="OfficeAddin.dll" Source="..\OfficeAddin\bin\$(var.Configuration)\OfficeAddin.dll" />
+          <File Id="OfficeGeneralDll" Name="OfficeGeneral.dll" Source="..\OfficeGeneral\bin\$(var.Configuration)\OfficeGeneral.dll" />
+
+          <Class Id="{FC098D9B-7077-47A7-8F95-9BDAC9B6915F}" Context="InprocServer32" Description="OfficeAddin.Connect" ThreadingModel="both" ForeignServer="mscoree.dll">
+            <ProgId Id="OfficeAddin.Connect" Description="OfficeAddin.Connect" />
+          </Class>
+          <RegistryKey Root="HKCR" Key="CLSID\{FC098D9B-7077-47A7-8F95-9BDAC9B6915F}">
+            <RegistryValue Key="Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" Value="" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="Class" Value="OfficeAddin.Connect" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="Assembly" Value="OfficeAddin, Version=$(var.OfficeAddinVersion), Culture=neutral, PublicKeyToken=bcd8628d11b1d62b" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="RuntimeVersion" Value="$(var.RuntimeVersion)" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="CodeBase" Value="file:///[#OfficeAddinDll]" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="Class" Value="OfficeAddin.Connect" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="Assembly" Value="OfficeAddin, Version=$(var.OfficeAddinVersion), Culture=neutral, PublicKeyToken=bcd8628d11b1d62b" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="RuntimeVersion" Value="$(var.RuntimeVersion)" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="CodeBase" Value="file:///[#OfficeAddinDll]" Type="string" Action="write" />
+          </RegistryKey>
+
+          <Class Id="{66C8F0C3-0CED-42E1-8ED3-6FD8B974DDC2}" Context="InprocServer32" Description="OfficeAddin.TaskPane.TaskPaneControl" ThreadingModel="both" ForeignServer="mscoree.dll">
+            <ProgId Id="OfficeAddin.TaskPane.TaskPaneControl" Description="OfficeAddin.TaskPane.TaskPaneControl" />
+          </Class>
+          <RegistryKey Root="HKCR" Key="CLSID\{66C8F0C3-0CED-42E1-8ED3-6FD8B974DDC2}">
+            <RegistryValue Key="Implemented Categories\{62C8FE65-4EBB-45e7-B440-6E39B2CDBF29}" Value="" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="Class" Value="OfficeAddin.TaskPane.TaskPaneControl" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="Assembly" Value="OfficeAddin, Version=$(var.OfficeAddinVersion), Culture=neutral, PublicKeyToken=bcd8628d11b1d62b" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="RuntimeVersion" Value="$(var.RuntimeVersion)" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32\$(var.OfficeAddinVersion)" Name="CodeBase" Value="file:///[#OfficeAddinDll]" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="Class" Value="OfficeAddin.TaskPane.TaskPaneControl" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="Assembly" Value="OfficeAddin, Version=$(var.OfficeAddinVersion), Culture=neutral, PublicKeyToken=bcd8628d11b1d62b" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="RuntimeVersion" Value="$(var.RuntimeVersion)" Type="string" Action="write" />
+            <RegistryValue Key="InprocServer32" Name="CodeBase" Value="file:///[#OfficeAddinDll]" Type="string" Action="write" />
+          </RegistryKey>
+        </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="Product_Word_Registration" Directory="INSTALLFOLDER" Guid="{1D73235E-4FC1-42FD-94DE-E6373AE59E65}">
+      <RegistryKey Root="HKLM" Key="Software\Microsoft\Office\Word\Addins\OfficeAddin.Connect">
+        <RegistryValue Type="string" Name="FriendlyName" Value="Test Office Addin" />
+        <RegistryValue Type="string" Name="Description" Value="Test Office Addin" />
+        <RegistryValue Type="integer" Name="LoadBehavior" KeyPath="yes" Value="3"/>
+      </RegistryKey>
+    </Component>
+
+    <Component Id="Product_Excel_Registration" Directory="INSTALLFOLDER" Guid="{1952F87A-9ED6-4689-8CCF-1A16092D89B0}">
+      <RegistryKey Root="HKLM" Key="Software\Microsoft\Office\Excel\Addins\OfficeAddin.Connect">
+        <RegistryValue Type="string" Name="FriendlyName" Value="Test Office Addin" />
+        <RegistryValue Type="string" Name="Description" Value="Test Office Addin" />
+        <RegistryValue Type="integer" Name="LoadBehavior" KeyPath="yes" Value="3"/>
+      </RegistryKey>
+    </Component>
+
+    <Component Id="Product_PowerPoint_Registration" Directory="INSTALLFOLDER" Guid="{4F5BEF90-181B-4B79-B2EE-5BE8D342826A}">
+      <RegistryKey Root="HKLM" Key="Software\Microsoft\Office\PowerPoint\Addins\OfficeAddin.Connect">
+        <RegistryValue Type="string" Name="FriendlyName" Value="Test Office Addin" />
+        <RegistryValue Type="string" Name="Description" Value="Test Office Addin" />
+        <RegistryValue Type="integer" Name="LoadBehavior" KeyPath="yes" Value="3"/>
+      </RegistryKey>
+    </Component>
+
+    <Component Id="Product_Outlook_Registration" Directory="INSTALLFOLDER" Guid="{C65D6A23-2E89-4AA4-A6F8-659A603E0B46}">
+      <RegistryKey Root="HKLM" Key="Software\Microsoft\Office\Outlook\Addins\OfficeAddin.Connect">
+        <RegistryValue Type="string" Name="FriendlyName" Value="Test Office Addin" />
+        <RegistryValue Type="string" Name="Description" Value="Test Office Addin" />
+        <RegistryValue Type="integer" Name="LoadBehavior" KeyPath="yes" Value="3"/>
+      </RegistryKey>
+    </Component>
+
+    <Component Id="Product_Access_Registration" Directory="INSTALLFOLDER" Guid="{DDDBAD80-579B-4748-91E2-041F83705157}">
+      <RegistryKey Root="HKLM" Key="Software\Microsoft\Office\Access\Addins\OfficeAddin.Connect">
+        <RegistryValue Type="string" Name="FriendlyName" Value="Test Office Addin" />
+        <RegistryValue Type="string" Name="Description" Value="Test Office Addin" />
+        <RegistryValue Type="integer" Name="LoadBehavior" KeyPath="yes" Value="3"/>
+      </RegistryKey>
+    </Component>
+  </Fragment>
+</Wix>

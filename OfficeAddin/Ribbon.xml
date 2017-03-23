@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui"
+          xmlns:default="OfficeAddin.Connect"
+          onLoad="Ribbon_OnLoad">
+  <ribbon>
+    <tabs>
+      <tab id="tabOfficeAddin" getLabel="Ribbon_GetLabel">
+        <group id="grpCurrency" getLabel="Ribbon_GetLabel">
+          <button id="btnUsd" size="large" imageMso="FunctionsMathTrigInsertGallery" getLabel="Ribbon_GetLabel" onAction="ButtonUsd_OnClick" />
+          <button id="btnEur" size="large" imageMso="FunctionsRecentlyUsedtInsertGallery" getLabel="Ribbon_GetLabel" onAction="ButtonEur_OnClick" />
+          <button id="btnByn" size="large" imageMso="FunctionsTextInsertGallery" getLabel="Ribbon_GetLabel" onAction="ButtonByn_OnClick" />
+        </group>
+        <group id="grpTaskPane" getLabel="Ribbon_GetLabel">
+          <toggleButton id="btnTaskPane" size="large" imageMso="ViewDocumentActionsPane" getLabel="Ribbon_GetLabel" getPressed="ButtonTaskPane_GetPressed" onAction="ButtonTaskPane_OnClick" />
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

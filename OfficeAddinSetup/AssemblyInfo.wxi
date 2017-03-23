@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <?define MajorVersion = "1" ?>
+  <?define MinorVersion = "0" ?>
+  <?define BuildVersion = "1" ?>
+
+  <?define ProductVersion = "$(var.MajorVersion).$(var.MinorVersion).$(var.BuildVersion)" ?>
+  <?define ProductName = "$(var.TargetName) $(var.ProductVersion) $(var.Platform)" ?>
+
+  <?define UpgradeCode.Guid = "640BA484-472C-4368-8E47-443DB9481BBF" ?>
+  <?define ImplCategory.Guid = "{2887B426-A553-4E50-B9AD-A8D8260D764D}" ?>
+  <?define RuntimeVersion = "v4.0.30319" ?>
+</Include>
